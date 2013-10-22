@@ -8,6 +8,15 @@
 #include "DataFormats/Math/interface/LorentzVector.h"
 #include "TLorentzVector.h"
 
+// CORAL
+#include "CoralBase/MessageStream.h"
+#include "CoralKernel/Context.h"
+#include "CoralKernel/IProperty.h"
+#include "CoralKernel/IPropertyManager.h"
+#include "RelationalAccess/ISessionProxy.h"
+#include "RelationalAccess/IConnectionServiceConfiguration.h"
+#include "RelationalAccess/ISchema.h"
+#include "RelationalAccess/ITransaction.h"
 
 #include <iostream>
 #include <iomanip>
@@ -19,7 +28,7 @@
 //
 // -------------------------------------- Constructor --------------------------------------------
 //
-DQMExample_Step1::DQMExample_Step1(const edm::ParameterSet& ps)
+DQMExample_Step1::DQMExample_Step1(const edm::ParameterSet& ps): m_connectionService(), m_session(), m_connectionString( "" )
 {
   edm::LogInfo("DQMExample_Step1") <<  "Constructor  DQMExample_Step1::DQMExample_Step1 " << std::endl;
   
@@ -44,6 +53,57 @@ DQMExample_Step1::DQMExample_Step1(const edm::ParameterSet& ps)
  
   //DQMStore
   dbe_ = edm::Service<DQMStore>().operator->();
+  
+  //Database connection configuration parameters
+  edm::ParameterSet connectionParameters = ps.getParameter<edm::ParameterSet>("DBParameters");
+  std::string authPath = connectionParameters.getUntrackedParameter<std::string>("authPath", "");
+  int messageLevel = connectionParameters.getUntrackedParameter<int>("messageLevel",0);
+  coral::MsgLevel level = coral::Error;
+  switch (messageLevel) {
+  case 0 :
+    level = coral::Error;
+    break;    
+  case 1 :
+      level = coral::Warning;
+    break;
+  case 2 :
+    level = coral::Info;
+    break;
+  case 3 :
+    level = coral::Debug;
+    break;
+  default:
+    level = coral::Error;
+  }
+  bool enableConnectionSharing = connectionParameters.getUntrackedParameter<bool>("enableConnectionSharing",true);
+  int connectionTimeOut = connectionParameters.getUntrackedParameter<int>("connectionTimeOut",600);
+  bool enableReadOnlySessionOnUpdateConnection = connectionParameters.getUntrackedParameter<bool>("enableReadOnlySessionOnUpdateConnection",true);
+  int connectionRetrialPeriod = connectionParameters.getUntrackedParameter<int>("connectionRetrialPeriod",30);
+  int connectionRetrialTimeOut = connectionParameters.getUntrackedParameter<int>("connectionRetrialTimeOut",180);
+  bool enablePoolAutomaticCleanUp = connectionParameters.getUntrackedParameter<bool>("enablePoolAutomaticCleanUp",false);
+  //connection string
+  m_connectionString = ps.getParameter<std::string>("connect");
+  //now configure the DB connection
+  coral::IConnectionServiceConfiguration& coralConfig = m_connectionService.configuration();
+  //TODO: set up the authentication mechanism
+  
+  // message streaming
+  coral::MessageStream::setMsgVerbosity( level );
+  //connection sharing
+  if(enableConnectionSharing) coralConfig.enableConnectionSharing();
+  else coralConfig.disableConnectionSharing();
+  //connection timeout
+  coralConfig.setConnectionTimeOut(connectionTimeOut);
+  //read-only session on update connection
+  if(enableReadOnlySessionOnUpdateConnection) coralConfig.enableReadOnlySessionOnUpdateConnections();
+  else coralConfig.disableReadOnlySessionOnUpdateConnections();
+  //connection retrial period
+  coralConfig.setConnectionRetrialPeriod( connectionRetrialPeriod );
+  //connection retrial timeout
+  coralConfig.setConnectionRetrialTimeOut( connectionRetrialTimeOut );
+  //pool automatic cleanup
+  if(enablePoolAutomaticCleanUp) coralConfig.enablePoolAutomaticCleanUp();
+  else coralConfig.disablePoolAutomaticCleanUp();
 }
 
 //
