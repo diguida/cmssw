@@ -19,6 +19,17 @@ DQMExample_Step1 = cms.EDAnalyzer("DQMExample_Step1",
     PtThrL2 = cms.untracked.double(10.0),
     PtThrJet = cms.untracked.double(20.0),
     PtThrMet = cms.untracked.double(20.0),
+    DBParameters = cms.PSet(
+       authenticationPath = cms.untracked.string(''),
+       messageLevel = cms.untracked.int32(3),
+       enableConnectionSharing = cms.untracked.bool(True),
+       connectionTimeOut = cms.untracked.int32(60),
+       enableReadOnlySessionOnUpdateConnection = cms.untracked.bool(False),
+       connectionRetrialTimeOut = cms.untracked.int32(60),
+       connectionRetrialPeriod = cms.untracked.int32(10),
+       enablePoolAutomaticCleanUp = cms.untracked.bool(False),
+       ),
+    connect = cms.string('sqlite_file:testDQM2DB.db'),
     
 )
 

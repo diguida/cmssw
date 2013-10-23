@@ -129,7 +129,11 @@ void DQMExample_Step1::beginRun(edm::Run const& run, edm::EventSetup const& eSet
   edm::LogInfo("DQMExample_Step1") <<  "DQMExample_Step1::beginRun" << std::endl;
   
   //book at beginRun
-  bookHistos(dbe_);  
+  bookHistos(dbe_);
+  
+  //open the CORAL session at beginRun:
+  //connect to DB only if you have events to process!
+  m_session.reset( m_connectionService.connect( m_connectionString, coral::Update ) );
 }
 //
 // -------------------------------------- beginLuminosityBlock --------------------------------------------
@@ -376,6 +380,9 @@ void DQMExample_Step1::endLuminosityBlock(edm::LuminosityBlock const& lumiSeg, e
 void DQMExample_Step1::endRun(edm::Run const& run, edm::EventSetup const& eSetup)
 {
   edm::LogInfo("DQMExample_Step1") <<  "DQMExample_Step1::endRun" << std::endl;
+  //no more data to process:
+  //close DB session
+  m_session.reset();
 }
 
 //
