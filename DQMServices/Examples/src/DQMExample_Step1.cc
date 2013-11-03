@@ -9,6 +9,8 @@
 #include "TLorentzVector.h"
 
 // CORAL
+#include "CoralBase/AttributeList.h"
+#include "CoralBase/Attribute.h"
 #include "CoralBase/MessageStream.h"
 #include "CoralKernel/Context.h"
 #include "CoralKernel/IProperty.h"
@@ -17,6 +19,11 @@
 #include "RelationalAccess/IConnectionServiceConfiguration.h"
 #include "RelationalAccess/ISchema.h"
 #include "RelationalAccess/ITransaction.h"
+#include "RelationalAccess/ITable.h"
+#include "RelationalAccess/TableDescription.h"
+#include "RelationalAccess/ITableDataEditor.h"
+#include "RelationalAccess/IQuery.h"
+#include "RelationalAccess/ICursor.h"
 
 #include <iostream>
 #include <iomanip>
@@ -24,6 +31,7 @@
 #include <string>
 #include <sstream>
 #include <math.h>
+#include <vector>
 
 //
 // -------------------------------------- Constructor --------------------------------------------
@@ -134,6 +142,87 @@ void DQMExample_Step1::beginRun(edm::Run const& run, edm::EventSetup const& eSet
   //open the CORAL session at beginRun:
   //connect to DB only if you have events to process!
   m_session.reset( m_connectionService.connect( m_connectionString, coral::Update ) );
+  //do not run in production!
+  //create the relevant tables
+  coral::ISchema& schema = m_session->nominalSchema();
+  m_session->transaction().start( false );
+  bool dqmTablesExist = schema.existsTable( "DQM_HISTOS" );
+  if( ! dqmTablesExist ) {
+    int columnSize = 200;
+    coral::TableDescription descr;
+    descr.setName( "DQM_HISTOS" );
+    descr.insertColumn( "HISTO_NAME", coral::AttributeSpecification::typeNameForType<std::string>(), columnSize, false );
+    descr.insertColumn( "RUN_NUMBER", coral::AttributeSpecification::typeNameForType<unsigned int>() );
+    descr.insertColumn( "LUMISECTION", coral::AttributeSpecification::typeNameForType<unsigned int>() );
+    descr.insertColumn( "X_BINS", coral::AttributeSpecification::typeNameForType<int>() );
+    descr.insertColumn( "X_LOW", coral::AttributeSpecification::typeNameForType<double>() );
+    descr.insertColumn( "X_UP", coral::AttributeSpecification::typeNameForType<double>() );
+    descr.insertColumn( "Y_BINS", coral::AttributeSpecification::typeNameForType<int>() );
+    descr.insertColumn( "Y_LOW", coral::AttributeSpecification::typeNameForType<double>() );
+    descr.insertColumn( "Y_UP", coral::AttributeSpecification::typeNameForType<double>() );
+    descr.insertColumn( "Z_BINS", coral::AttributeSpecification::typeNameForType<int>() );
+    descr.insertColumn( "Z_LOW", coral::AttributeSpecification::typeNameForType<double>() );
+    descr.insertColumn( "Z_UP", coral::AttributeSpecification::typeNameForType<double>() );
+    descr.insertColumn( "ENTRIES", coral::AttributeSpecification::typeNameForType<double>() );
+    descr.insertColumn( "X_MEAN", coral::AttributeSpecification::typeNameForType<double>() );
+    descr.insertColumn( "X_MEAN_ERROR", coral::AttributeSpecification::typeNameForType<double>() );
+    descr.insertColumn( "X_RMS", coral::AttributeSpecification::typeNameForType<double>() );
+    descr.insertColumn( "X_RMS_ERROR", coral::AttributeSpecification::typeNameForType<double>() );
+    descr.insertColumn( "X_UNDERFLOW", coral::AttributeSpecification::typeNameForType<double>() );
+    descr.insertColumn( "X_OVERFLOW", coral::AttributeSpecification::typeNameForType<double>() );
+    descr.insertColumn( "Y_MEAN", coral::AttributeSpecification::typeNameForType<double>() );
+    descr.insertColumn( "Y_MEAN_ERROR", coral::AttributeSpecification::typeNameForType<double>() );
+    descr.insertColumn( "Y_RMS", coral::AttributeSpecification::typeNameForType<double>() );
+    descr.insertColumn( "Y_RMS_ERROR", coral::AttributeSpecification::typeNameForType<double>() );
+    descr.insertColumn( "Y_UNDERFLOW", coral::AttributeSpecification::typeNameForType<double>() );
+    descr.insertColumn( "Y_OVERFLOW", coral::AttributeSpecification::typeNameForType<double>() );
+    descr.insertColumn( "Z_MEAN", coral::AttributeSpecification::typeNameForType<double>() );
+    descr.insertColumn( "Z_MEAN_ERROR", coral::AttributeSpecification::typeNameForType<double>() );
+    descr.insertColumn( "Z_RMS", coral::AttributeSpecification::typeNameForType<double>() );
+    descr.insertColumn( "Z_RMS_ERROR", coral::AttributeSpecification::typeNameForType<double>() );
+    descr.insertColumn( "Z_UNDERFLOW", coral::AttributeSpecification::typeNameForType<double>() );
+    descr.insertColumn( "Z_OVERFLOW", coral::AttributeSpecification::typeNameForType<double>() );
+    descr.setNotNullConstraint( "HISTO_NAME" );
+    descr.setNotNullConstraint( "RUN_NUMBER" );
+    descr.setNotNullConstraint( "LUMISECTION" );
+    descr.setNotNullConstraint( "X_BINS" );
+    descr.setNotNullConstraint( "X_LOW" );
+    descr.setNotNullConstraint( "X_UP" );
+    descr.setNotNullConstraint( "Y_BINS" );
+    descr.setNotNullConstraint( "Y_LOW" );
+    descr.setNotNullConstraint( "Y_UP" );
+    descr.setNotNullConstraint( "Z_BINS" );
+    descr.setNotNullConstraint( "Z_LOW" );
+    descr.setNotNullConstraint( "Z_UP" );
+    descr.setNotNullConstraint( "ENTRIES" );
+    descr.setNotNullConstraint( "X_MEAN" );
+    descr.setNotNullConstraint( "X_MEAN_ERROR" );
+    descr.setNotNullConstraint( "X_RMS" );
+    descr.setNotNullConstraint( "X_RMS_ERROR" );
+    descr.setNotNullConstraint( "X_UNDERFLOW" );
+    descr.setNotNullConstraint( "X_OVERFLOW" );
+    descr.setNotNullConstraint( "Y_MEAN" );
+    descr.setNotNullConstraint( "Y_MEAN_ERROR" );
+    descr.setNotNullConstraint( "Y_RMS" );
+    descr.setNotNullConstraint( "Y_RMS_ERROR" );
+    descr.setNotNullConstraint( "Y_UNDERFLOW" );
+    descr.setNotNullConstraint( "Y_OVERFLOW" );
+    descr.setNotNullConstraint( "Z_MEAN" );
+    descr.setNotNullConstraint( "Z_MEAN_ERROR" );
+    descr.setNotNullConstraint( "Z_RMS" );
+    descr.setNotNullConstraint( "Z_RMS_ERROR" );
+    descr.setNotNullConstraint( "Z_UNDERFLOW" );
+    descr.setNotNullConstraint( "Z_OVERFLOW" );
+    std::vector<std::string> columnsForIndex;
+    columnsForIndex.push_back( "HISTO_NAME" );
+    columnsForIndex.push_back( "RUN_NUMBER" );
+    columnsForIndex.push_back( "LUMISECTION" );
+    descr.setPrimaryKey( columnsForIndex );
+    schema.createTable( descr );
+  }
+  m_session->transaction().commit();
+  //m_session->transaction().start(false);
+  //session->transaction().commit();
 }
 //
 // -------------------------------------- beginLuminosityBlock --------------------------------------------
