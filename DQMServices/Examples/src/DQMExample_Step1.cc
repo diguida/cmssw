@@ -1,6 +1,6 @@
 #include "DQMServices/Examples/interface/DQMExample_Step1.h"
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
-
+#include "FWCore/Framework/interface/LuminosityBlock.h"
 
 // Geometry
 #include "DataFormats/Math/interface/deltaR.h"
@@ -221,8 +221,6 @@ void DQMExample_Step1::beginRun(edm::Run const& run, edm::EventSetup const& eSet
     schema.createTable( descr );
   }
   m_session->transaction().commit();
-  //m_session->transaction().start(false);
-  //session->transaction().commit();
 }
 //
 // -------------------------------------- beginLuminosityBlock --------------------------------------------
@@ -460,6 +458,84 @@ void DQMExample_Step1::analyze(edm::Event const& e, edm::EventSetup const& eSetu
 void DQMExample_Step1::endLuminosityBlock(edm::LuminosityBlock const& lumiSeg, edm::EventSetup const& eSetup) 
 {
   edm::LogInfo("DQMExample_Step1") <<  "DQMExample_Step1::endLuminosityBlock" << std::endl;
+  //get the data from the histograms and fill the DB table
+  m_session->transaction().start(false);
+  coral::ITableDataEditor& editor = m_session->nominalSchema().tableHandle( "DQM_HISTOS" ).dataEditor();
+  coral::AttributeList insertData;
+  insertData.extend< std::string >( "HISTO_NAME" );
+  insertData.extend< unsigned int >( "RUN_NUMBER" );
+  insertData.extend< unsigned int >( "LUMISECTION" );
+  insertData.extend< int >( "X_BINS" );
+  insertData.extend< double >( "X_LOW" );
+  insertData.extend< double >( "X_UP" );
+  insertData.extend< int >( "Y_BINS" );
+  insertData.extend< double >( "Y_LOW" );
+  insertData.extend< double >( "Y_UP" );
+  insertData.extend< int >( "Z_BINS" );
+  insertData.extend< double >( "Z_LOW" );
+  insertData.extend< double >( "Z_UP" );
+  insertData.extend< double >( "ENTRIES" );
+  insertData.extend< double >( "X_MEAN" );
+  insertData.extend< double >( "X_MEAN_ERROR" );
+  insertData.extend< double >( "X_RMS" );
+  insertData.extend< double >( "X_RMS_ERROR" );
+  insertData.extend< double >( "X_UNDERFLOW");
+  insertData.extend< double >( "X_OVERFLOW" );
+  insertData.extend< double >( "Y_MEAN" );
+  insertData.extend< double >( "Y_MEAN_ERROR" );
+  insertData.extend< double >( "Y_RMS" );
+  insertData.extend< double >( "Y_RMS_ERROR" );
+  insertData.extend< double >( "Y_UNDERFLOW");
+  insertData.extend< double >( "Y_OVERFLOW" );
+  insertData.extend< double >( "Z_MEAN" );
+  insertData.extend< double >( "Z_MEAN_ERROR" );
+  insertData.extend< double >( "Z_RMS" );
+  insertData.extend< double >( "Z_RMS_ERROR" );
+  insertData.extend< double >( "Z_UNDERFLOW");
+  insertData.extend< double >( "Z_OVERFLOW" );
+  insertData[ "HISTO_NAME" ].data< std::string >() = h_vertex_number->getFullname();
+  insertData[ "RUN_NUMBER" ].data< unsigned int >() = lumiSeg.run();
+  insertData[ "LUMISECTION" ].data< unsigned int >() = lumiSeg.luminosityBlock();
+  insertData[ "X_BINS" ].data< int >() = h_vertex_number->getNbinsX(); //or h_vertex_number->getTH1()->GetNbinsX() ?
+  insertData[ "X_LOW" ].data< double >() = h_vertex_number->getTH1()->GetXaxis()->GetXmin();
+  insertData[ "X_UP" ].data< double >() = h_vertex_number->getTH1()->GetXaxis()->GetXmax();
+  //FIXME: should determine from the ME itself whether or not
+  // the definitions of the 2nd and 3rd dimensions of the histograms are to be inserted!
+  insertData[ "Y_BINS" ].data< int >() = 0; //h_vertex_number->getNbinsY();
+  insertData[ "Y_LOW" ].data< double >() = 0.; //h_vertex_number->getTH1()->GetYaxis()->GetXMin();
+  insertData[ "Y_UP" ].data< double >() = 0.; //h_vertex_number->getTH1()->GetYaxis()->GetXMax();
+  insertData[ "Z_BINS" ].data< int >() = 0; //h_vertex_number->getNbinsZ();
+  insertData[ "Z_LOW" ].data< double >() = 0.; //h_vertex_number->getTH1()->GetZaxis()->GetXMin();
+  insertData[ "Z_UP" ].data< double >() = 0.; //h_vertex_number->getTH1()->GetZaxis()->GetXMax();
+  insertData[ "ENTRIES" ].data< double >() = h_vertex_number->getEntries(); //or h_vertex_number->getTH1()->GetEntries() ?
+  //FIXME: if we use MonitorElement::getMean{Error} or MonitorElement::getRMS{Error}
+  // there is a check on the dimension of the TH1, which must be larger than the axis number - 1
+  // i.e. 0 for x axis, 1 for y axis, 2 for z axis.
+  // If we get the pointer to the TH1 object, we can avoid this check, and we are guaranteed that
+  // TH1 will give 0 for non-existing dimensions
+  // (indeed, in TH1::GetStats, the stats array is inizialized to 0 for elements between 4 and 10).
+  insertData[ "X_MEAN" ].data< double >() = h_vertex_number->getTH1()->GetMean();
+  insertData[ "X_MEAN_ERROR" ].data< double >() = h_vertex_number->getTH1()->GetMeanError();
+  insertData[ "X_RMS" ].data< double >() = h_vertex_number->getTH1()->GetRMS();
+  insertData[ "X_RMS_ERROR" ].data< double >() = h_vertex_number->getTH1()->GetRMSError();
+  //FIXME: should determine from the ME itself whether or not the underflow and overflow bins are to be inserted.
+  // Also, we should define what underflow and overflow mean in 2-D and 3-D histos.
+  insertData[ "X_UNDERFLOW" ].data< double >() = h_vertex_number->getTH1()->GetBinContent( 0 );
+  insertData[ "X_OVERFLOW" ].data< double >() = h_vertex_number->getTH1()->GetBinContent( h_vertex_number->getTH1()->GetNbinsX() + 1 );
+  insertData[ "Y_MEAN" ].data< double >() = h_vertex_number->getTH1()->GetMean( 2 );
+  insertData[ "Y_MEAN_ERROR" ].data< double >() = h_vertex_number->getTH1()->GetMeanError( 2 );
+  insertData[ "Y_RMS" ].data< double >() = h_vertex_number->getTH1()->GetRMS( 2 );
+  insertData[ "Y_RMS_ERROR" ].data< double >() = h_vertex_number->getTH1()->GetRMSError( 2 );
+  insertData[ "Y_UNDERFLOW" ].data< double >() = 0.;
+  insertData[ "Y_OVERFLOW" ].data< double >() = 0.;
+  insertData[ "Z_MEAN" ].data< double >() = h_vertex_number->getTH1()->GetMean( 3 );
+  insertData[ "Z_MEAN_ERROR" ].data< double >() = h_vertex_number->getTH1()->GetMeanError( 3 );
+  insertData[ "Z_RMS" ].data< double >() = h_vertex_number->getTH1()->GetRMS( 3 );
+  insertData[ "Z_RMS_ERROR" ].data< double >() = h_vertex_number->getTH1()->GetRMSError( 3 );
+  insertData[ "Z_UNDERFLOW" ].data< double >() = 0.;
+  insertData[ "Z_OVERFLOW" ].data< double >() = 0.;
+  editor.insertRow( insertData );
+  m_session->transaction().commit();
 }
 
 
