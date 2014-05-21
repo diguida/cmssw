@@ -40,14 +40,18 @@ process.DQMoutput = cms.OutputModule("DQMRootOutputModule",
 from Configuration.AlCa.GlobalTag import GlobalTag
 process.GlobalTag = GlobalTag(process.GlobalTag, 'auto:mc', '')  #for MC
 
+#DQMStore configuration
+process.DQMStore.verbose = cms.untracked.int32(1)
+
 #DQMFileSaver configuration
 process.dqmSaver.saveByLumiSection = cms.untracked.int32(1)
 process.dqmSaver.convention = cms.untracked.string('FilterUnit')
-process.dqmSaver.fileFormat = cms.untracked.string('ROOT')
+process.dqmSaver.fileFormat = cms.untracked.string('PB')
 process.dqmSaver.workflow = cms.untracked.string('')
 
 # Path and EndPath definitions
-process.dqmoffline_step = cms.Path(process.DQMExample_Step1+process.DQMSaver)
+process.dqmoffline_step = cms.Path(process.DQMExample_Step1)
+process.dqmsave_step = cms.Path(process.DQMSaver)
 #process.DQMoutput_step = cms.EndPath(process.DQMoutput)
 
 
@@ -55,4 +59,5 @@ process.dqmoffline_step = cms.Path(process.DQMExample_Step1+process.DQMSaver)
 process.schedule = cms.Schedule(
     process.dqmoffline_step,
 #    process.DQMoutput_step
+    process.dqmsave_step
     )
