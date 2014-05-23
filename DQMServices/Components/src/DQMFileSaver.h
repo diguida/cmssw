@@ -84,18 +84,6 @@ private:
 
   int			 numKeepSavedFiles_;
   std::list<std::string> pastSavedFiles_;
-  
-  MonitorElement * versCMSSW_ ;
-  MonitorElement * versDataset_ ;
-  MonitorElement * versTaglist_ ;
-  MonitorElement * versGlobaltag_ ;
-  MonitorElement * hostName_;          ///Hostname of the local machine
-  MonitorElement * processName_;       ///DQM "name" of the job (eg, Hcal or DT)
-  MonitorElement * workingDir_;        ///Current working directory of the job
-  MonitorElement * processId_;         ///The PID associated with this job
-  MonitorElement * isComplete_;
-  MonitorElement * fileVersion_;
-  
 
   
 };
