@@ -278,30 +278,42 @@ filterUnitFileNames(const std::string &fileBaseName, const std::string &producer
 }
 
 void
-DQMFileSaver::saveJson(int run, int lumi, const std::string& fn, const std::string& data_fn) {
+DQMFileSaver::saveJson(const std::string& jsonFileName, const std::string& dataFileName) {
   using namespace boost::property_tree;
+  int hostnameReturn;
+  char host[32];
+  hostnameReturn = gethostname(host ,sizeof(host));
+  if(hostnameReturn == -1)
+  throw cms::Exception("DQMFileSaver")
+          << "Internal error, cannot get host name";
+
   ptree pt;
   ptree data;
+  ptree processedEvents, acceptedEvents, errorEvents, bitmask, fileList, inputFiles;
 
-  ptree child1, child2, child3;
+  processedEvents.put("", -1); // Processed events
+  acceptedEvents.put("", -1); // Accepted events
+  errorEvents.put("", -1); // Error events
+  bitmask.put("", 1); // Bitmask of abs of CMSSW return code
+  fileList.put("", dataFileName); // Data file the information refers to
+  inputFiles.put("", ""); // We do not care about input files!
 
-  child1.put("", -1); // Processed
-  child2.put("", -1); // Accepted
-  child3.put("", data_fn); // filelist
-
-  data.push_back(std::make_pair("", child1));
-  data.push_back(std::make_pair("", child2));
-  data.push_back(std::make_pair("", child3));
+  data.push_back(std::make_pair("", processedEvents));
+  data.push_back(std::make_pair("", acceptedEvents));
+  data.push_back(std::make_pair("", errorEvents));
+  data.push_back(std::make_pair("", bitmask));
+  data.push_back(std::make_pair("", fileList));
+  data.push_back(std::make_pair("", inputFiles));
 
   pt.add_child("data", data);
   pt.put("definition", "/non-existant/");
-  pt.put("source", "--hostname--");
-  
+  pt.put("source", host);
+
   char tmpFileName[64];
   sprintf(tmpFileName, "DQMFU_%05d.jsn", getpid());
   // Write to a temporary file, then rename it.
   write_json(tmpFileName, pt);
-  rename(tmpFileName , fn.c_str());
+  rename(tmpFileName, jsonFileName.c_str());
 }
 
 void
@@ -312,7 +324,7 @@ DQMFileSaver::saveForFilterUnitPB(int run, int lumi)
   // Save the file
   // TODO(diguida): check if this is multithread friendly!
   dbe_->savePB(fileNames.first, filterName_);
-  saveJson(run, lumi, fileNames.second, fileNames.first);
+  saveJson(fileNames.second, fileNames.first);
 }
 
 void
@@ -333,7 +345,7 @@ DQMFileSaver::saveForFilterUnit(const std::string& rewrite, int run, int lumi)
              (DQMStore::SaveReferenceTag) saveReference_,
              saveReferenceQMin_,
              fileUpdate_);
-  saveJson(run, lumi, fileNames.second, fileNames.first);
+  saveJson(fileNames.second, fileNames.first);
 }
 
 void
