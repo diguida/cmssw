@@ -15,6 +15,7 @@
 #include <iostream>
 #include <vector>
 #include <string>
+#include <utility>
 #include <TString.h>
 #include <TSystem.h>
 
@@ -41,6 +42,12 @@ dataFileExtension(DQMFileSaver::FileFormat fileFormat)
   else if (fileFormat ==  DQMFileSaver::PB)
     extension = ".pb";
   return extension;
+}
+
+static std::string
+jsonFileExtension(void)
+{
+  return std::string(".jsn");
 }
 
 static std::string
@@ -260,14 +267,15 @@ filterUnitFilePrefix(const std::string &fileBaseName, const std::string &produce
   return fileprefix;
 }
 
-/*
-static std::string
-filterUnitFileName(const std::string &fileBaseName, const std::string &producer, int run, int lumi, DQMFileSaver::FileFormat fileFormat)
+
+static std::pair<std::string, std::string>
+filterUnitFileNames(const std::string &fileBaseName, const std::string &producer, int run, int lumi, DQMFileSaver::FileFormat fileFormat)
 {
-  std::string filename = filterUnitFilePrefix(fileBaseName, producer, run, lumi) + dataFileExtension(fileFormat);
-  return filename;
+  std::string filePrefix = filterUnitFilePrefix(fileBaseName, producer, run, lumi);
+  std::string filename = filePrefix + dataFileExtension(fileFormat);
+  std::string jsonName = filePrefix + jsonFileExtension();
+  return std::make_pair(filename, jsonName); 
 }
-*/
 
 void
 DQMFileSaver::saveJson(int run, int lumi, const std::string& fn, const std::string& data_fn) {
@@ -299,29 +307,25 @@ DQMFileSaver::saveJson(int run, int lumi, const std::string& fn, const std::stri
 void
 DQMFileSaver::saveForFilterUnitPB(int run, int lumi)
 {
-  std::string filePrefix = filterUnitFilePrefix(fileBaseName_, producer_, run, lumi);
-  std::string filename = filePrefix + dataFileExtension(PB);
-  std::string filename_json = filePrefix + ".jsn";
+  std::pair<std::string, std::string> fileNames = filterUnitFileNames(fileBaseName_, producer_, run, lumi, PB);
 
   // Save the file
-  // TODO(diguida): check if this is mutithread friendly!
-  dbe_->savePB(filename, filterName_);
-  saveJson(run, lumi, filename_json, filename);
+  // TODO(diguida): check if this is multithread friendly!
+  dbe_->savePB(fileNames.first, filterName_);
+  saveJson(run, lumi, fileNames.second, fileNames.first);
 }
 
 void
 DQMFileSaver::saveForFilterUnit(const std::string& rewrite, int run, int lumi)
 {
-  std::string filePrefix = filterUnitFilePrefix(fileBaseName_, producer_, run, lumi);
-  std::string filename = filePrefix + dataFileExtension(ROOT);
-  std::string filename_json = filePrefix + ".jsn";
+  std::pair<std::string, std::string> fileNames = filterUnitFileNames(fileBaseName_, producer_, run, lumi, ROOT);
 
   // Save the file with the full directory tree,
   // modifying it according to @a rewrite,
   // but not looking for MEs inside the DQMStore, as in the online case,
   // nor filling new MEs, as in the offline case.
-  // TODO(diguida): check if this is mutithread friendly!
-  dbe_->save(filename,
+  // TODO(diguida): check if this is multithread friendly!
+  dbe_->save(fileNames.first,
              "",
              "^(Reference/)?([^/]+)",
              rewrite,
@@ -329,7 +333,7 @@ DQMFileSaver::saveForFilterUnit(const std::string& rewrite, int run, int lumi)
              (DQMStore::SaveReferenceTag) saveReference_,
              saveReferenceQMin_,
              fileUpdate_);
-  saveJson(run, lumi, filename_json, filename);
+  saveJson(run, lumi, fileNames.second, fileNames.first);
 }
 
 void
