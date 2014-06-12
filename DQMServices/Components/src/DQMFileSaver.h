@@ -6,6 +6,11 @@
 #include <sys/time.h>
 #include <string>
 
+namespace evf
+{
+  class FastMonitoringService;
+}
+
 class DQMStore;
 class DQMFileSaver : public edm::EDAnalyzer
 {
@@ -50,6 +55,7 @@ private:
   FileFormat    fileFormat_;
   std::string	workflow_;
   std::string	producer_;
+  std::string   stream_label_;
   std::string	dirName_;
   std::string   child_;
   std::string	filterName_;
@@ -85,7 +91,9 @@ private:
   int			 numKeepSavedFiles_;
   std::list<std::string> pastSavedFiles_;
 
-  
+  // Services used in DAQ2 (so for FilterUnit case only)
+  evf::FastMonitoringService * fms_;
+
 };
 
 #endif // DQMSERVICES_COMPONEntS_DQMFILESAVER_H
