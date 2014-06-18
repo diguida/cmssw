@@ -3,6 +3,7 @@
 
 #include "FWCore/Framework/interface/EDAnalyzer.h"
 #include "DQMServices/Core/interface/MonitorElement.h"
+#include <boost/property_tree/ptree.hpp>
 #include <sys/time.h>
 #include <string>
 
@@ -49,7 +50,7 @@ private:
   void saveForFilterUnitPB(int run, int lumi);
   void saveForFilterUnit(const std::string& rewrite, int run, int lumi);
   void saveJobReport(const std::string &filename);
-  void saveJson(const std::string& jsonFileName, const std::string& dataFileName);
+  void fillJson(int run, int lumi, const std::string& dataFilePathName, boost::property_tree::ptree& pt);
 
   Convention	convention_;
   FileFormat    fileFormat_;
