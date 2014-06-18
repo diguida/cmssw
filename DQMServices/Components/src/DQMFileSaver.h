@@ -95,6 +95,9 @@ private:
   // Services used in DAQ2 (so for FilterUnit case only)
   evf::FastMonitoringService * fms_;
 
+  static const std::string streamPrefix_;
+  static const std::string streamSuffix_;
+
 };
 
 #endif // DQMSERVICES_COMPONEntS_DQMFILESAVER_H

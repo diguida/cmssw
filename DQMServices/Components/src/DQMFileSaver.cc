@@ -26,6 +26,10 @@
 #include <boost/filesystem.hpp>
 
 //--------------------------------------------------------
+const std::string DQMFileSaver::streamPrefix_("stream");
+const std::string DQMFileSaver::streamSuffix_("Histograms");
+
+//--------------------------------------------------------
 static void
 getAnInt(const edm::ParameterSet &ps, int &value, const std::string &name)
 {
@@ -500,7 +504,7 @@ DQMFileSaver::DQMFileSaver(const edm::ParameterSet &ps)
       << "Invalid 'producer' parameter '" << producer_
       << "'.  Expected 'DQM'.";
   }
-  stream_label_ = std::string("stream") + producer_ + std::string("histograms");
+  stream_label_ = streamPrefix_ + producer_ + streamSuffix_;
 
   // version number to be used in filename
   version_ = ps.getUntrackedParameter<int>("version", version_);
