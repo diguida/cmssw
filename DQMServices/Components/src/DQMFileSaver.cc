@@ -307,7 +307,8 @@ DQMFileSaver::fillJson(int run, int lumi, const std::string& dataFilePathName, b
   outJsonDefName /= (std::string("output_") + oss_pid.str() + std::string(".jsd"));
   pt.put("definition", outJsonDefName.string());
   char sourceInfo[64]; //host and pid information
-  pt.put("source", sprintf(sourceInfo, "%s_%d", host, pid));
+  sprintf(sourceInfo, "%s_%d", host, pid);
+  pt.put("source", sourceInfo);
 }
 
 void
