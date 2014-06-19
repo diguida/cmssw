@@ -311,62 +311,49 @@ DQMFileSaver::fillJson(int run, int lumi, const std::string& dataFilePathName, b
 }
 
 void
-DQMFileSaver::saveForFilterUnitPB(int run, int lumi)
+DQMFileSaver::saveForFilterUnit(const std::string& rewrite, int run, int lumi, const DQMFileSaver::FileFormat fileFormat)
 {
+  // get from DAQ2 services where to store the files according to their format
   namespace bpt = boost::property_tree;
-  std::string openHistoFilePathName = edm::Service<evf::EvFDaqDirector>()->getOpenProtocolBufferHistogramFilePath(lumi, stream_label_);
-  std::string openJsonFilePathName = edm::Service<evf::EvFDaqDirector>()->getOpenOutputJsonFilePath(lumi, stream_label_);
   bpt::ptree pt;
-  // Save the file in the open directory.
-  // TODO(diguida): check if this is multithread friendly!
-  dbe_->savePB(openHistoFilePathName, filterName_);
-  this->fillJson(run, lumi, openHistoFilePathName, pt);
-  // Write the json file in the open directory.
-  bpt::write_json(openJsonFilePathName, pt);
-  // Now move the the data and json files to the output directory.
-  std::string histoFilePathName = edm::Service<evf::EvFDaqDirector>()->getProtocolBufferHistogramFilePath(lumi, stream_label_);
-  int result = rename(openHistoFilePathName.c_str(), histoFilePathName.c_str());
-  // Check that the histogram file is there
-  struct stat histoFileStat;
-  if ((result != 0) || (stat(histoFilePathName.c_str(), &histoFileStat) != 0))
-    throw cms::Exception("DQMFileSaver")
-          << "Internal error, cannot get data file: "
-	  << histoFilePathName;
-  // TODO(diguida): check that the histogram file size after renaming is the same as the one in the json tree
-  result = rename(openJsonFilePathName.c_str(), edm::Service<evf::EvFDaqDirector>()->getOutputJsonFilePath(lumi, stream_label_).c_str());
-  if (result != 0)
-    throw cms::Exception("DQMFileSaver")
-          << "Internal error, cannot move json file: "
-	  << openJsonFilePathName;
-}
-
-void
-DQMFileSaver::saveForFilterUnit(const std::string& rewrite, int run, int lumi)
-{
-  namespace bpt = boost::property_tree;
-  std::string openHistoFilePathName = edm::Service<evf::EvFDaqDirector>()->getOpenRootHistogramFilePath(lumi, stream_label_);
+  std::string openHistoFilePathName;
+  std::string histoFilePathName;
   std::string openJsonFilePathName = edm::Service<evf::EvFDaqDirector>()->getOpenOutputJsonFilePath(lumi, stream_label_);
-  bpt::ptree pt;
-
-  // Save the file with the full directory tree,
-  // modifying it according to @a rewrite,
-  // but not looking for MEs inside the DQMStore, as in the online case,
-  // nor filling new MEs, as in the offline case.
-  // TODO(diguida): check if this is multithread friendly!
-  dbe_->save(openHistoFilePathName,
-             "",
-             "^(Reference/)?([^/]+)",
-             rewrite,
-             0,
-             (DQMStore::SaveReferenceTag) saveReference_,
-             saveReferenceQMin_,
-             fileUpdate_);
-
+  std::string jsonFilePathName = edm::Service<evf::EvFDaqDirector>()->getOutputJsonFilePath(lumi, stream_label_);
+  if (fileFormat == ROOT)
+  {
+    openHistoFilePathName = edm::Service<evf::EvFDaqDirector>()->getOpenRootHistogramFilePath(lumi, stream_label_);
+    histoFilePathName = edm::Service<evf::EvFDaqDirector>()->getRootHistogramFilePath(lumi, stream_label_);
+    // Save the file with the full directory tree,
+    // modifying it according to @a rewrite,
+    // but not looking for MEs inside the DQMStore, as in the online case,
+    // nor filling new MEs, as in the offline case.
+    // TODO(diguida): check if this is multithread friendly!
+    dbe_->save(openHistoFilePathName,
+               "",
+               "^(Reference/)?([^/]+)",
+               rewrite,
+               0,
+               (DQMStore::SaveReferenceTag) saveReference_,
+               saveReferenceQMin_,
+               fileUpdate_);
+  }
+  else if (fileFormat == PB)
+  {
+    openHistoFilePathName = edm::Service<evf::EvFDaqDirector>()->getOpenProtocolBufferHistogramFilePath(lumi, stream_label_);
+    histoFilePathName = edm::Service<evf::EvFDaqDirector>()->getProtocolBufferHistogramFilePath(lumi, stream_label_);
+    // Save the file in the open directory.
+    // TODO(diguida): check if this is multithread friendly!
+    dbe_->savePB(openHistoFilePathName, filterName_);
+  }
+  else
+    throw cms::Exception("DQMFileSaver")
+          << "Internal error, can save files"
+          << " only in ROOT or ProtocolBuffer format.";
   this->fillJson(run, lumi, openHistoFilePathName, pt);
   // Write the json file in the open directory.
   write_json(openJsonFilePathName, pt);
-  // Now move the the data and json files to the output directory.
-  std::string histoFilePathName = edm::Service<evf::EvFDaqDirector>()->getRootHistogramFilePath(lumi, stream_label_);
+  // Now move the the data and json files into the output directory.
   int result = rename(openHistoFilePathName.c_str(), histoFilePathName.c_str());
   // Check that the histogram file is there
   struct stat histoFileStat;
@@ -375,11 +362,12 @@ DQMFileSaver::saveForFilterUnit(const std::string& rewrite, int run, int lumi)
           << "Internal error, cannot get data file: "
 	  << histoFilePathName;
   // TODO(diguida): check that the histogram file size after renaming is the same as the one in the json tree
-  result = rename(openJsonFilePathName.c_str(), edm::Service<evf::EvFDaqDirector>()->getOutputJsonFilePath(lumi, stream_label_).c_str());
+  result = rename(openJsonFilePathName.c_str(), jsonFilePathName.c_str());
   if (result != 0)
     throw cms::Exception("DQMFileSaver")
           << "Internal error, cannot move json file: "
-	  << openJsonFilePathName;
+	  << openJsonFilePathName
+	  << " into: " << jsonFilePathName;
 }
 
 void
@@ -742,18 +730,9 @@ DQMFileSaver::endLuminosityBlock(const edm::LuminosityBlock &, const edm::EventS
     }
     if (convention_ == FilterUnit) // store at every lumi section end
     {
-      if (fileFormat_ == ROOT)
-      {
-        char rewrite[128];
-        sprintf(rewrite, "\\1Run %d/\\2/By Lumi Section %d-%d", irun_, ilumi_, ilumi_);
-        saveForFilterUnit(rewrite, irun_, ilumi_);
-      }
-      else if (fileFormat_ == PB)
-        saveForFilterUnitPB(irun_, ilumi_);
-      else
-        throw cms::Exception("DQMFileSaver")
-          << "Internal error, can save files"
-          << " only in ROOT or ProtocolBuffer format.";
+      char rewrite[128];
+      sprintf(rewrite, "\\1Run %d/\\2/By Lumi Section %d-%d", irun_, ilumi_, ilumi_);
+      saveForFilterUnit(rewrite, irun_, ilumi_, fileFormat_);
     }
     if (convention_ == Offline)
     {
