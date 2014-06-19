@@ -304,8 +304,8 @@ DQMFileSaver::fillJson(int run, int lumi, const std::string& dataFilePathName, b
   pt.add_child("data", data);
   // The availability test of the EvFDaqDirector Service was done in the ctor.
   bfs::path outJsonDefName(edm::Service<evf::EvFDaqDirector>()->baseRunDir()); //we assume this file is written bu the EvF Output module
-  outJsonDefName /= (std::string("output_") + oss_pid.str());
-  pt.put("definition", outJsonDefName);
+  outJsonDefName /= (std::string("output_") + oss_pid.str() + std::string(".jsd"));
+  pt.put("definition", outJsonDefName.string());
   char sourceInfo[64]; //host and pid information
   pt.put("source", sprintf(sourceInfo, "%s_%d", host, pid));
 }
