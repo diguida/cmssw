@@ -87,6 +87,7 @@ private:
 
   static const std::string streamPrefix_;
   static const std::string streamSuffix_;
+  static constexpr int fakeEventCount = -1;
 };
 
 #endif // DQMSERVICES_COMPONEntS_DQMFILESAVER_H

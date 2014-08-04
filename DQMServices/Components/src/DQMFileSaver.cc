@@ -262,8 +262,8 @@ DQMFileSaver::fillJson(int run, int lumi, const std::string& dataFilePathName, b
   bpt::ptree data;
   bpt::ptree processedEvents, acceptedEvents, errorEvents, bitmask, fileList, fileSize, inputFiles;
 
-  processedEvents.put("", fms_ ? (fms_->getEventsProcessedForLumi(lumi)) : -1); // Processed events
-  acceptedEvents.put("", fms_ ? (fms_->getEventsProcessedForLumi(lumi)) : -1); // Accepted events, same as processed for our purposes
+  processedEvents.put("", fms_ ? (fms_->getEventsProcessedForLumi(lumi)) : fakeEventCount); // Processed events
+  acceptedEvents.put("", fms_ ? (fms_->getEventsProcessedForLumi(lumi)) : fakeEventCount); // Accepted events, same as processed for our purposes
 
   errorEvents.put("", 0); // Error events
   bitmask.put("", 0); // Bitmask of abs of CMSSW return code
@@ -664,12 +664,21 @@ DQMFileSaver::globalEndLuminosityBlock(const edm::LuminosityBlock & iLS, const e
           << "Internal error, can save files"
           << " only in ROOT or ProtocolBuffer format.";
     }
-    // store at every lumi section end only if some events have been processed
-    if (convention_ == FilterUnit && fms_->getEventsProcessedForLumi(ilumi) > 0)
+    // Store at every lumi section end only if some events have been processed.
+    // Caveat: if faking FilterUnit, i.e. not accessing DAQ2 services,
+    // we cannot ask FastMonitoringService the processed events, so we are forced
+    // to save the file at every lumisection, even with no statistics.
+    // TODO(diguida): allow fake FU mode to skip file creation at empty lumi sections.
+    if (convention_ == FilterUnit)
     {
-      char rewrite[128];
-      sprintf(rewrite, "\\1Run %d/\\2/By Lumi Section %d-%d", irun, ilumi, ilumi);
-      saveForFilterUnit(rewrite, irun, ilumi, fileFormat_);
+      int eventsForLumi = fms_ ? (int) fms_->getEventsProcessedForLumi(ilumi) : fakeEventCount;
+      if( eventsForLumi > 0 // in real FilterUnit mode, test if some events were processed; false for fake FU
+	  || eventsForLumi ==  fakeEventCount ) // false for real FilterUnit mode; true for fake FU
+      {
+        char rewrite[128];
+        sprintf(rewrite, "\\1Run %d/\\2/By Lumi Section %d-%d", irun, ilumi, ilumi);
+        saveForFilterUnit(rewrite, irun, ilumi, fileFormat_);
+      }
     }
     if (convention_ == Offline)
     {
