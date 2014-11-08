@@ -30,8 +30,6 @@
 #include "SimDataFormats/CrossingFrame/interface/MixCollection.h"
 #include "DataFormats/HcalDetId/interface/HcalZDCDetId.h"
 #include "SimCalorimetry/HcalSimAlgos/interface/HPDNoiseGenerator.h"
-#include "CondFormats/HcalObjects/interface/HcalCholeskyMatrix.h"
-#include "CondFormats/HcalObjects/interface/HcalCholeskyMatrices.h"
 #include <boost/foreach.hpp>
 #include "Geometry/CaloTopology/interface/HcalTopology.h"
 #include "SimDataFormats/CaloTest/interface/HcalTestNumbering.h"
@@ -400,18 +398,10 @@ void HcalDigitizer::initializeEvent(edm::Event const& e, edm::EventSetup const& 
   theUpgradeCoderFactory->setDbService(conditions.product());
   theParameterMap->setDbService(conditions.product());
 
-  edm::ESHandle<HcalCholeskyMatrices> refCholesky;
-  eventSetup.get<HcalCholeskyMatricesRcd>().get(refCholesky);
-  const HcalCholeskyMatrices * myCholesky = refCholesky.product();
-
   edm::ESHandle<HcalPedestals> pedshandle;
   eventSetup.get<HcalPedestalsRcd>().get(pedshandle);
   const HcalPedestals *  myADCPedestals = pedshandle.product();
 
-  theHBHEAmplifier->setCholesky(myCholesky);
-  theHFAmplifier->setCholesky(myCholesky);
-  theHOAmplifier->setCholesky(myCholesky);
-  
   theHBHEAmplifier->setADCPeds(myADCPedestals);
   theHFAmplifier->setADCPeds(myADCPedestals);
   theHOAmplifier->setADCPeds(myADCPedestals);
