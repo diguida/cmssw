@@ -6,8 +6,6 @@
 class CaloVSimParameterMap;
 class CaloVNoiseSignalGenerator;
 #include "SimCalorimetry/CaloSimAlgos/interface/CaloVSimParameterMap.h"
-#include "CondFormats/HcalObjects/interface/HcalCholeskyMatrices.h"
-#include "CondFormats/HcalObjects/interface/HcalCholeskyMatrix.h"
 #include "CondFormats/HcalObjects/interface/HcalPedestals.h"
 #include "CondFormats/HcalObjects/interface/HcalPedestal.h"
 #include "DataFormats/HcalDetId/interface/HcalGenericDetId.h"
@@ -49,7 +47,6 @@ public:
   void setUseOldHE(bool useOld);
   void setUseOldHF(bool useOld);
   void setUseOldHO(bool useOld);
-  void setCholesky(const HcalCholeskyMatrices * Cholesky) { myCholeskys = Cholesky; }
   void setADCPeds(const HcalPedestals * ADCPeds) { myADCPeds = ADCPeds; }
 
 private:
@@ -57,11 +54,11 @@ private:
   void pe2fC(CaloSamples & frame) const;
   void addPedestals(CaloSamples & frame, CLHEP::HepRandomEngine*) const;
   void makeNoiseOld (HcalGenericDetId::HcalGenericSubdetector hcalSubDet, const HcalCalibrationWidths& width, int fFrames, double* fGauss, double* fNoise) const;
-  void makeNoise (const HcalCholeskyMatrix & thisChanCholesky, int fFrames, double* fGauss, double* fNoise, int m) const;
 
   const HcalDbService * theDbService;
   const CaloVSimParameterMap * theParameterMap;
   const CaloVNoiseSignalGenerator * theNoiseSignalGenerator;
+  const HcalPedestals * myADCPeds;
   HPDIonFeedbackSim * theIonFeedbackSim;
   HcalTimeSlewSim * theTimeSlewSim;
   unsigned theStartingCapId;
@@ -77,8 +74,6 @@ private:
   double HE_ff;
   double HF_ff;
   double HO_ff;
-  const HcalCholeskyMatrices * myCholeskys;
-  const HcalPedestals * myADCPeds;
 };
 
 #endif
