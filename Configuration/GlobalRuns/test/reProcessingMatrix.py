@@ -62,13 +62,14 @@ for scenario, matrix in alCaRecoMatrix.items():
         recoSpec = cosmic_recoSpec
         customise = cosmic_customise
         output = options.output
+    elif scenario == 'hcalnzs':
+        recoSpec = ':reconstruction_HcalNZS'
+        customise = pp_customise
+        output = "RECO,DQM"
     else:
         print "Scenario \"%s\" not supported." %( scenario, )
         continue
     for PD in matrix:
-        if PD == 'HcalNZS':
-            recoSpec = ':reconstruction_HcalNZS'
-            output = "RECO,DQM"
         #os.system(
         print com %( recoSpec,
                           ',ALCA:'+'+'.join( matrix[ PD ] ) if matrix[ PD ] else '',
