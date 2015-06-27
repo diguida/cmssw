@@ -19,8 +19,7 @@ pp_scenario = 'pp'
 pp_recoSpec = ''
 pp_customise = '.customisePPData'
 
-#os.system(
-print com %( pp_recoSpec,
+os.system( com %( pp_recoSpec,
                   '',
                   pp_scenario,
                   options.output,
@@ -31,15 +30,14 @@ print com %( pp_recoSpec,
                   pp_scenario,
                   options.GT
                   )
-#           )
+           )
 
 #cosmic configuration without Alca
 cosmic_scenario = 'cosmics'
 cosmic_recoSpec = ''
 cosmic_customise = '.customiseCosmicData'
 
-#os.system(
-print com %( cosmic_recoSpec,
+os.system( com %( cosmic_recoSpec,
                   '',
                   cosmic_scenario,
                   options.output,
@@ -50,7 +48,7 @@ print com %( cosmic_recoSpec,
                   cosmic_scenario,
                   options.GT
                   )
-#           )
+           )
 
 #collision and cosmic configurations with AlCa
 for scenario, matrix in alCaRecoMatrix.items():
@@ -70,8 +68,7 @@ for scenario, matrix in alCaRecoMatrix.items():
         print "Scenario \"%s\" not supported." %( scenario, )
         continue
     for PD in matrix:
-        #os.system(
-        print com %( recoSpec,
+        os.system( com %( recoSpec,
                           ',ALCA:'+'+'.join( matrix[ PD ] ) if matrix[ PD ] else '',
                           scenario,
                           output,
@@ -82,4 +79,4 @@ for scenario, matrix in alCaRecoMatrix.items():
                           scenario,
                           options.GT
                           )
-#                   )
+                   )
