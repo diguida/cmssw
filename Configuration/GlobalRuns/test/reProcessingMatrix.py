@@ -1,38 +1,84 @@
 import optparse
 import os
+from Configuration.AlCa.autoAlca import alCaRecoMatrix
 
-usage="--list"
-parser = optparse.OptionParser(usage)
-parser.add_option("--GT")
-parser.add_option("--TLR",default="--customise Configuration/DataProcessing/RecoTLR")
-parser.add_option("--options",default="")
-parser.add_option("--output",default="RECO,AOD,DQM")
-parser.add_option("--rel",default="39X")
+usage= "--list"
+parser = optparse.OptionParser( usage )
+parser.add_option( "--GT" )
+parser.add_option( "--TLR", default = "--customise Configuration/DataProcessing/RecoTLR" )
+parser.add_option( "--options", default = "" )
+parser.add_option( "--output", default = "RECO,AOD,DQM" )
+parser.add_option("--rel", default = "74X" )
 
-(options,args)=parser.parse_args()
+( options, args ) = parser.parse_args()
 
-com='cmsDriver.py reco -s RAW2DIGI,L1Reco,RECO%s,DQM%s  --data --magField AutoFromDBCurrent --scenario %s --datatier %s --eventcontent %s %s%s --no_exec --python_filename=rereco_%s%s.py --conditions %s '+options.options
+com = 'cmsDriver.py reco -s RAW2DIGI,L1Reco,RECO%s,DQM%s  --data --magField AutoFromDBCurrent --scenario %s --datatier %s --eventcontent %s %s%s --no_exec --python_filename=rereco_%s%s.py --conditions %s '+options.options
 
-#collision config no Alca
-os.system(com%('','','pp',options.output,options.output,options.TLR,'.customisePPData','','pp',options.GT))
+#collision configuration without Alca
+pp_scenario = 'pp'
+pp_recoSpec = ''
+pp_customise = '.customisePPData'
 
-#cosmics config without Alca
-os.system(com%('','','cosmics',options.output,options.output,options.TLR,'.customiseCosmicData','','cosmics',options.GT))
+#os.system(
+print com %( pp_recoSpec,
+                  '',
+                  pp_scenario,
+                  options.output,
+                  options.output,
+                  options.TLR,
+                  pp_customise,
+                  '',
+                  pp_scenario,
+                  options.GT
+                  )
+#           )
 
-from Configuration.AlCa.autoAlca import autoAlca
-for PD in autoAlca:
-    recoSpec=''
-    scenario='pp'
-    customise='.customisePPData'
-    output=options.output
-    if PD=='Cosmics':
-        scenario='cosmics'
-        customise='.customiseCosmicData'
-        output="RECO,DQM"
-    if PD=='HcalNZS':
-        recoSpec=':reconstruction_HcalNZS'
-        output="RECO,DQM"
+#cosmic configuration without Alca
+cosmic_scenario = 'cosmics'
+cosmic_recoSpec = ''
+cosmic_customise = '.customiseCosmicData'
 
-    os.system(com%(recoSpec,',ALCA:'+autoAlca[PD],scenario,output,output,options.TLR,customise,PD+'_',scenario,options.GT))
+#os.system(
+print com %( cosmic_recoSpec,
+                  '',
+                  cosmic_scenario,
+                  options.output,
+                  options.output,
+                  options.TLR,
+                  cosmic_customise,
+                  '',
+                  cosmic_scenario,
+                  options.GT
+                  )
+#           )
 
-
+#collision and cosmic configurations with AlCa
+for scenario, matrix in alCaRecoMatrix.items():
+    if scenario == 'pp':
+        recoSpec = pp_recoSpec
+        customise = pp_customise
+        output = options.output
+    elif scenario == 'cosmics':
+        recoSpec = cosmic_recoSpec
+        customise = cosmic_customise
+        output = options.output
+    else:
+        print "Scenario \"%s\" not supported." %( scenario, )
+        continue
+    for PD in matrix:
+        if PD == 'HcalNZS':
+            recoSpec = ':reconstruction_HcalNZS'
+            output = "RECO,DQM"
+        #os.system(
+        print com %( recoSpec,
+                          ',ALCA:'+'+'.join( matrix[ PD ] ) if matrix[ PD ] else '',
+                          scenario,
+                          output,
+                          output,
+                          options.TLR,
+                          customise,
+                          PD+'_',
+                          scenario,
+                          options.GT
+                          )
+#                   )
