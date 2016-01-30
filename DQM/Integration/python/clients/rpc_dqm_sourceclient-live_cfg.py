@@ -32,8 +32,9 @@ process.load("CondCore.DBCommon.CondDBSetup_cfi")
 #process.load("DQMServices.Core.DQM_cfg")
 # Condition for P5 cluster
 process.load("DQM.Integration.config.FrontierCondition_GT_cfi")
-# Condition for lxplus
-#process.load("DQM.Integration.config.FrontierCondition_GT_Offline_cfi") 
+# Condition for lxplus: change and possibly customise the GT
+#from Configuration.AlCa.GlobalTag import GlobalTag as gtCustomise
+#process.GlobalTag = gtCustomise(process.GlobalTag, 'auto:run2_data', '')
 process.GlobalTag.RefreshEachRun = cms.untracked.bool(True)
 
 ############## DQM Enviroment ###################
