@@ -11,12 +11,12 @@
 
 
 #include "FWCore/Framework/interface/Frameworkfwd.h"
-#include "FWCore/Framework/interface/EDAnalyzer.h"
+#include "FWCore/Framework/interface/global/EDAnalyzer.h"
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 
 namespace popcon{
   template <typename S>
-  class PopConAnalyzer : public edm::EDAnalyzer {
+  class PopConAnalyzer : public edm::global::EDAnalyzer<> {
   public:
     typedef S SourceHandler;
     
@@ -29,12 +29,12 @@ namespace popcon{
     
   private:
     
-    virtual void beginJob(){}
-    virtual void endJob() {
+    virtual void beginJob()override {}
+    virtual void endJob() override {
       write();
     }
     
-    virtual void analyze(const edm::Event&, const edm::EventSetup&){} 
+    virtual void analyze(edm::StreamID, const edm::Event&, const edm::EventSetup&) const override {} 
     
     
     void write() {
