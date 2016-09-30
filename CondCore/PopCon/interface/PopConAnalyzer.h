@@ -11,18 +11,20 @@
 
 
 #include "FWCore/Framework/interface/Frameworkfwd.h"
-#include "FWCore/Framework/interface/EDAnalyzer.h"
+#include "FWCore/Framework/interface/one/EDAnalyzer.h"
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 
 namespace popcon{
   template <typename S>
-  class PopConAnalyzer : public edm::EDAnalyzer {
+  class PopConAnalyzer : public edm::one::EDAnalyzer<edm::one::SharedResources> {
   public:
     typedef S SourceHandler;
     
     PopConAnalyzer(const edm::ParameterSet& pset) : 
       m_populator(pset),
-      m_source(pset.getParameter<edm::ParameterSet>("Source")) {}
+      m_source(pset.getParameter<edm::ParameterSet>("Source")) {
+      usesResource( std::string( "PoolDBOutputService" ) );
+}
     
     
     virtual ~PopConAnalyzer(){}
