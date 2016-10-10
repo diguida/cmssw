@@ -245,6 +245,7 @@
 #include "CondFormats/SiStripObjects/interface/SiStripPedestals.h"
 #include "CondFormats/BTauObjects/interface/TrackProbabilityCalibration.h"
 #include "CondFormats/MFObjects/interface/MagFieldConfig.h"
+#include "CondFormats/GEMObjects/interface/GEMEMap.h"
 
 #include "CondFormats/Common/interface/BaseKeyed.h"
 
